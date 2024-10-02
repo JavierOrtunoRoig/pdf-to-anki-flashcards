@@ -2,7 +2,7 @@ import fitz  # PyMuPDF
 
 
 def extract_highlights_from_pdf(pdf_path):
-  """Extrae los subrayados de un archivo PDF y clasifica el texto por color."""
+  """Extracts highlights from a PDF file and classifies the text by color."""
   doc = fitz.open(pdf_path)
 
   cloze_cards = []
@@ -12,57 +12,57 @@ def extract_highlights_from_pdf(pdf_path):
     page = doc[page_num]
     annotations_by_color = process_page_annotations(page)
 
-    # Proceso de las tarjetas Cloze
+    # Cloze card processing
     if annotations_by_color["yellow"]:
-      green_annotations_for_cloze = annotations_by_color["green"].copy()  # Copiamos para evitar problemas
+      green_annotations_for_cloze = annotations_by_color["green"].copy()  # Copy to avoid issues
       for yellow_text in annotations_by_color["yellow"]:
         cloze_applied_text, used_greens = apply_cloze_to_text(yellow_text, green_annotations_for_cloze)
         if cloze_applied_text:
-          cloze_cards.append((cloze_applied_text, used_greens))  # Asociar con las partes verdes usadas
+          cloze_cards.append((cloze_applied_text, used_greens))  # Associate with used green parts
 
-    # Proceso de las tarjetas de escritura
+    # Writing card processing
     if annotations_by_color["blue"]:
-      green_annotations_for_writing = annotations_by_color["green"].copy()  # Copiamos para evitar problemas
+      green_annotations_for_writing = annotations_by_color["green"].copy()  # Copy to avoid issues
       for blue_text in annotations_by_color["blue"]:
         writing_applied_text, used_greens = apply_writing_card(blue_text, green_annotations_for_writing)
         if writing_applied_text:
-          writing_cards.append((writing_applied_text, used_greens))  # Asociar con las partes verdes usadas
+          writing_cards.append((writing_applied_text, used_greens))  # Associate with used green parts
 
   return cloze_cards, writing_cards
 
 
 def process_page_annotations(page):
-  """Procesa las anotaciones de subrayado en una página y las clasifica por color."""
+  """Processes the highlights on a page and classifies the text by color."""
   annotations_by_color = {"green": [], "yellow": [], "blue": []}
 
   for annot in page.annots():
-    if annot.type[0] == 8:  # Resalto/Subrayado
+    if annot.type[0] == 8:  # Highlight
       color = annot.colors["stroke"]
       quads = annot.vertices
-      subrayado_texto = extract_highlighted_text(page, quads)
-      classify_annotation_by_color(subrayado_texto, color, annotations_by_color)
+      highlighted_text = extract_highlighted_text(page, quads)
+      classify_annotation_by_color(highlighted_text, color, annotations_by_color)
 
   return annotations_by_color
 
 
 def extract_highlighted_text(page, quads):
-  """Extrae el texto subrayado de los quads en una página."""
-  subrayado_texto = ""
+  """Extracts the highlighted text from the quads on a page."""
+  highlighted_text = ""
 
   for i in range(0, len(quads), 4):
     rect = fitz.Rect(quads[i][0], quads[i][1], quads[i + 3][0], quads[i + 3][1])
-    subrayado_texto += page.get_text("text", clip=rect).strip() + " "
+    highlighted_text += page.get_text("text", clip=rect).strip() + " "
 
-  return subrayado_texto.strip()
+  return highlighted_text.strip()
 
 
 def classify_annotation_by_color(text, color, annotations_by_color):
-  """Clasifica las anotaciones de subrayado por color."""
+  """Classifies highlight annotations by color."""
   r, g, b = color[0], color[1], color[2]
 
   is_green = r < 0.5 and g > 0.9 and b < 0.5
   is_yellow = r > 0.9 and g > 0.9 and b < 0.5
-  is_blue = r < 0.6 and g > 0.5 and b > 0.9  # Detectamos si el color es azul
+  is_blue = r < 0.6 and g > 0.5 and b > 0.9  # Detect if the color is blue
 
   if is_green:
     annotations_by_color["green"].append(text)
@@ -73,50 +73,44 @@ def classify_annotation_by_color(text, color, annotations_by_color):
 
 
 def apply_cloze_to_text(yellow_text, green_annotations):
-  """Aplica las anotaciones de cloze (verde) dentro del texto amarillo dado y registra las partes en verde."""
-  applied_cloze = False  # Para controlar si aplicamos algún cloze
-  used_greens = []  # Almacenar las partes verdes usadas en esta tarjeta
+  """Applies the green (cloze) annotations within the yellow text and records the green parts used."""
+  applied_cloze = False  # To track if any cloze is applied
+  used_greens = []  # Store the green parts used in this card
 
-  for green_text in green_annotations.copy():  # Hacemos copia para evitar modificar mientras iteramos
+  for green_text in green_annotations.copy():  # Copy to avoid modifying while iterating
     if green_text in yellow_text:
       yellow_text = yellow_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
-      used_greens.append(green_text)  # Guardamos las partes verdes usadas en esta tarjeta
-      green_annotations.remove(green_text)  # Eliminamos la anotación verde ya usada
+      used_greens.append(green_text)  # Store the green parts used in this card
+      green_annotations.remove(green_text)  # Remove the used green annotation
       applied_cloze = True
 
   return yellow_text if applied_cloze else None, used_greens
 
 
 def apply_writing_card(blue_text, green_annotations):
-  """Genera una tarjeta de escritura si el texto azul contiene partes verdes."""
-  applied_writing = False  # Para controlar si aplicamos alguna escritura
-  used_greens = []  # Almacenar las partes verdes usadas en esta tarjeta
+  """Generates a writing card if the blue text contains green parts."""
+  applied_writing = False  # To track if any writing card is applied
+  used_greens = []  # Store the green parts used in this card
 
-  for green_text in green_annotations.copy():  # Hacemos copia para evitar modificar mientras iteramos
+  for green_text in green_annotations.copy():  # Copy to avoid modifying while iterating
     if green_text in blue_text:
-      # Aquí podemos crear una instrucción para que el usuario escriba el texto verde
+      # Here we can create an instruction for the user to write the green text
       blue_text = blue_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
-      used_greens.append(green_text)  # Guardamos las partes verdes usadas en esta tarjeta
-      green_annotations.remove(green_text)  # Eliminamos la anotación verde ya usada
+      used_greens.append(green_text)  # Store the green parts used in this card
+      green_annotations.remove(green_text)  # Remove the used green annotation
       applied_writing = True
 
-  return f"Escribe: {blue_text}" if applied_writing else None, used_greens
+  return f"Write: {blue_text}" if applied_writing else None, used_greens
 
 
-# Función principal
-def main(pdf_path):
-  cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
+pdf_path = "./Francés para dummies.pdf"
+cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
 
-  # Formateamos el output
-  print("\nCloze Cards:")
-  for cloze_card, green_texts in cloze_cards:
-    print(f"{cloze_card} | Partes en verde: {green_texts}")
+# Formatting the output
+print("\nCloze Cards:")
+for cloze_card, green_texts in cloze_cards:
+  print(f"{cloze_card} | Green parts: {green_texts}")
 
-  print("\nWriting Cards:")
-  for writing_card, green_texts in writing_cards:
-    print(f"{writing_card} | Partes en verde: {green_texts}")
-
-
-# Ejecutar el programa con el archivo PDF
-pdf_file = "./Francés para dummies.pdf"
-main(pdf_file)
+print("\nWriting Cards:")
+for writing_card, green_texts in writing_cards:
+  print(f"{writing_card} | Green parts: {green_texts}")
