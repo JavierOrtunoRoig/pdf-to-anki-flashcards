@@ -7,7 +7,6 @@ def extract_highlights_from_pdf(pdf_path):
 
   cloze_cards = []
   writing_cards = []
-  highlighted_cloze = []  # Aquí guardaremos todas las partes resaltadas en verde
 
   for page_num in range(doc.page_count):
     page = doc[page_num]
@@ -15,33 +14,21 @@ def extract_highlights_from_pdf(pdf_path):
 
     # Proceso de las tarjetas Cloze
     if annotations_by_color["yellow"]:
-      green_annotations_for_cloze = annotations_by_color[
-        "green"
-      ].copy()  # Copiamos para evitar problemas
+      green_annotations_for_cloze = annotations_by_color["green"].copy()  # Copiamos para evitar problemas
       for yellow_text in annotations_by_color["yellow"]:
-        cloze_applied_text, used_greens = apply_cloze_to_text(
-          yellow_text, green_annotations_for_cloze, highlighted_cloze
-        )
+        cloze_applied_text, used_greens = apply_cloze_to_text(yellow_text, green_annotations_for_cloze)
         if cloze_applied_text:
-          cloze_cards.append(
-            (cloze_applied_text, used_greens)
-          )  # Asociar con las partes verdes usadas
+          cloze_cards.append((cloze_applied_text, used_greens))  # Asociar con las partes verdes usadas
 
     # Proceso de las tarjetas de escritura
     if annotations_by_color["blue"]:
-      green_annotations_for_writing = annotations_by_color[
-        "green"
-      ].copy()  # Copiamos para evitar problemas
+      green_annotations_for_writing = annotations_by_color["green"].copy()  # Copiamos para evitar problemas
       for blue_text in annotations_by_color["blue"]:
-        writing_applied_text, used_greens = apply_writing_card(
-          blue_text, green_annotations_for_writing, highlighted_cloze
-        )
+        writing_applied_text, used_greens = apply_writing_card(blue_text, green_annotations_for_writing)
         if writing_applied_text:
-          writing_cards.append(
-            (writing_applied_text, used_greens)
-          )  # Asociar con las partes verdes usadas
+          writing_cards.append((writing_applied_text, used_greens))  # Asociar con las partes verdes usadas
 
-  return cloze_cards, writing_cards, highlighted_cloze
+  return cloze_cards, writing_cards
 
 
 def process_page_annotations(page):
@@ -85,43 +72,31 @@ def classify_annotation_by_color(text, color, annotations_by_color):
     annotations_by_color["blue"].append(text)
 
 
-def apply_cloze_to_text(yellow_text, green_annotations, highlighted_cloze):
+def apply_cloze_to_text(yellow_text, green_annotations):
   """Aplica las anotaciones de cloze (verde) dentro del texto amarillo dado y registra las partes en verde."""
   applied_cloze = False  # Para controlar si aplicamos algún cloze
   used_greens = []  # Almacenar las partes verdes usadas en esta tarjeta
 
-  for green_text in (
-    green_annotations.copy()
-  ):  # Hacemos copia para evitar modificar mientras iteramos
+  for green_text in green_annotations.copy():  # Hacemos copia para evitar modificar mientras iteramos
     if green_text in yellow_text:
       yellow_text = yellow_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
-      highlighted_cloze.append(
-        green_text
-      )  # Guardamos las partes verdes en highlighted_cloze
-      used_greens.append(
-        green_text
-      )  # Guardamos las partes verdes usadas en esta tarjeta
+      used_greens.append(green_text)  # Guardamos las partes verdes usadas en esta tarjeta
       green_annotations.remove(green_text)  # Eliminamos la anotación verde ya usada
       applied_cloze = True
 
   return yellow_text if applied_cloze else None, used_greens
 
 
-def apply_writing_card(blue_text, green_annotations, highlighted_cloze):
+def apply_writing_card(blue_text, green_annotations):
   """Genera una tarjeta de escritura si el texto azul contiene partes verdes."""
   applied_writing = False  # Para controlar si aplicamos alguna escritura
   used_greens = []  # Almacenar las partes verdes usadas en esta tarjeta
 
-  for green_text in (
-    green_annotations.copy()
-  ):  # Hacemos copia para evitar modificar mientras iteramos
+  for green_text in green_annotations.copy():  # Hacemos copia para evitar modificar mientras iteramos
     if green_text in blue_text:
       # Aquí podemos crear una instrucción para que el usuario escriba el texto verde
       blue_text = blue_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
-      highlighted_cloze.append(green_text)
-      used_greens.append(
-        green_text
-      )  # Guardamos las partes verdes usadas en esta tarjeta
+      used_greens.append(green_text)  # Guardamos las partes verdes usadas en esta tarjeta
       green_annotations.remove(green_text)  # Eliminamos la anotación verde ya usada
       applied_writing = True
 
@@ -130,7 +105,7 @@ def apply_writing_card(blue_text, green_annotations, highlighted_cloze):
 
 # Función principal
 def main(pdf_path):
-  cloze_cards, writing_cards, highlighted_cloze = extract_highlights_from_pdf(pdf_path)
+  cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
 
   # Formateamos el output
   print("\nCloze Cards:")
@@ -140,8 +115,6 @@ def main(pdf_path):
   print("\nWriting Cards:")
   for writing_card, green_texts in writing_cards:
     print(f"{writing_card} | Partes en verde: {green_texts}")
-
-  print("\nHighlighted Cloze (resaltado en verde):", highlighted_cloze)
 
 
 # Ejecutar el programa con el archivo PDF
