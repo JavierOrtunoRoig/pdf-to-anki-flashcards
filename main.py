@@ -1,6 +1,12 @@
 import fitz  # PyMuPDF
 import genanki
 from anki import anki_model
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import messagebox
+
+
+pdf_path = None
 
 
 def extract_highlights_from_pdf(pdf_path):
@@ -108,19 +114,71 @@ def apply_writing_card(blue_text, green_annotations):
   return f"Write: {blue_text}" if applied_writing else None, used_greens
 
 
-pdf_path = "./Francés para dummies.pdf"
-cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
+def upload_pdf():
+  global pdf_path  # Use the global variable to store the file path
+  pdf_path = filedialog.askopenfilename(title="Select PDF", filetypes=[("PDF Files", "*.pdf")])
+  if pdf_path:
+    file_label.config(text=f"Selected file: {pdf_path}")
+  return pdf_path
 
-anki_deck = genanki.Deck(
-  2059400111,  # ID único del mazo
-  "Cloze Deck with Notes",
-)
 
-# Formatting the output
-for cloze_card, green_texts in cloze_cards:
-  card = genanki.Note(model=anki_model, fields=[cloze_card, "", ""])
-  anki_deck.add_note(card)
+def save_file():
+  if not pdf_path:
+    messagebox.showwarning("Warning", "Please upload a PDF file first.")
+    return
 
-genanki.Package(anki_deck).write_to_file("output_deck.apkg")
+  file_name = name_entry.get()
+  new_file_path = filedialog.askdirectory(title="Select Destination Folder")
 
-print("Anki deck created and saved as 'output_deck.apkg'")
+  if new_file_path and file_name:
+    full_path = f"{new_file_path}/{file_name}.apkg"
+
+    cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
+
+    anki_deck = genanki.Deck(
+      2059400111,  # ID único del mazo
+      "Cloze Deck with Notes",
+    )
+
+    # Formatting the output
+    for cloze_card, green_texts in cloze_cards:
+      card = genanki.Note(model=anki_model, fields=[cloze_card, "", ""])
+      anki_deck.add_note(card)
+
+    genanki.Package(anki_deck).write_to_file(full_path)
+
+    messagebox.showinfo("File Saved", f"The file will be saved at: {full_path}")
+    # Here you can use pdf_path and full_path to work with the files
+    # Example: generate or manipulate files
+  else:
+    messagebox.showwarning("Warning", "Please select a folder and provide a file name.")
+
+
+# Create main window
+window = tk.Tk()
+window.title("Upload PDF and Save File")
+window.geometry("400x200")
+
+# Button to upload PDF file
+upload_button = tk.Button(window, text="Upload PDF", command=upload_pdf)
+upload_button.pack(pady=10)
+
+# Label to show selected file
+file_label = tk.Label(window, text="No file selected.")
+file_label.pack(pady=5)
+
+# Field to enter the generated file name
+name_label = tk.Label(window, text="Name for generated .apkg file:")
+name_label.pack(pady=5)
+
+name_entry = tk.Entry(window)
+name_entry.pack(pady=5)
+
+# Button to save file
+save_button = tk.Button(window, text="Save file", command=save_file)
+save_button.pack(pady=10)
+
+# Run the application
+window.mainloop()
+
+# print("Anki deck created and saved as 'output_deck.apkg'")
