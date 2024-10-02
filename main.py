@@ -76,13 +76,15 @@ def apply_cloze_to_text(yellow_text, green_annotations):
   """Applies the green (cloze) annotations within the yellow text and records the green parts used."""
   applied_cloze = False  # To track if any cloze is applied
   used_greens = []  # Store the green parts used in this card
+  iteration = 1
 
   for green_text in green_annotations.copy():  # Copy to avoid modifying while iterating
     if green_text in yellow_text:
-      yellow_text = yellow_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
+      yellow_text = yellow_text.replace(green_text, f"{{{{c{iteration}::{green_text}}}}}")
       used_greens.append(green_text)  # Store the green parts used in this card
       green_annotations.remove(green_text)  # Remove the used green annotation
       applied_cloze = True
+      iteration += 1
 
   return yellow_text if applied_cloze else None, used_greens
 
@@ -91,14 +93,15 @@ def apply_writing_card(blue_text, green_annotations):
   """Generates a writing card if the blue text contains green parts."""
   applied_writing = False  # To track if any writing card is applied
   used_greens = []  # Store the green parts used in this card
+  iteration = 1
 
   for green_text in green_annotations.copy():  # Copy to avoid modifying while iterating
     if green_text in blue_text:
-      # Here we can create an instruction for the user to write the green text
-      blue_text = blue_text.replace(green_text, f"{{{{c1::{green_text}}}}}")
+      blue_text = blue_text.replace(green_text, f"{{{{c{iteration}::{green_text}}}}}")
       used_greens.append(green_text)  # Store the green parts used in this card
       green_annotations.remove(green_text)  # Remove the used green annotation
       applied_writing = True
+      iteration += 1
 
   return f"Write: {blue_text}" if applied_writing else None, used_greens
 
