@@ -1,4 +1,6 @@
 import fitz  # PyMuPDF
+import genanki
+from anki import anki_model
 
 
 def extract_highlights_from_pdf(pdf_path):
@@ -109,11 +111,16 @@ def apply_writing_card(blue_text, green_annotations):
 pdf_path = "./Francés para dummies.pdf"
 cloze_cards, writing_cards = extract_highlights_from_pdf(pdf_path)
 
-# Formatting the output
-print("\nCloze Cards:")
-for cloze_card, green_texts in cloze_cards:
-  print(f"{cloze_card} | Green parts: {green_texts}")
+anki_deck = genanki.Deck(
+  2059400111,  # ID único del mazo
+  "Cloze Deck with Notes",
+)
 
-print("\nWriting Cards:")
-for writing_card, green_texts in writing_cards:
-  print(f"{writing_card} | Green parts: {green_texts}")
+# Formatting the output
+for cloze_card, green_texts in cloze_cards:
+  card = genanki.Note(model=anki_model, fields=[cloze_card, "", ""])
+  anki_deck.add_note(card)
+
+genanki.Package(anki_deck).write_to_file("output_deck.apkg")
+
+print("Anki deck created and saved as 'output_deck.apkg'")
