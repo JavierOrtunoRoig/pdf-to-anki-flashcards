@@ -2,3 +2,5 @@
 .venv
 *.pdf
 __pycache__
+build
+main.spec
