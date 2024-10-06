@@ -2,8 +2,8 @@ import fitz  # PyMuPDF
 import genanki
 from anki import anki_model
 import tkinter as tk
-from tkinter import filedialog
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
+from tkinter import font as tkFont
 
 
 pdf_path = None
@@ -156,29 +156,38 @@ def save_file():
 
 # Create main window
 window = tk.Tk()
-window.title("Upload PDF and Save File")
-window.geometry("400x200")
+window.title("PDF to Anki Flashcards")
+window.geometry("600x250")
+window.configure(bg="#f0f4f5")  # Light background color
+
+# Custom fonts
+title_font = tkFont.Font(family="Helvetica", size=14, weight="bold")
+label_font = tkFont.Font(family="Helvetica", size=10)
+
+# Title label
+title_label = tk.Label(window, text="PDF to Anki Flashcards", font=title_font, bg="#f0f4f5")
+title_label.pack(pady=10)
 
 # Button to upload PDF file
-upload_button = tk.Button(window, text="Upload PDF", command=upload_pdf)
+upload_button = tk.Button(window, text="Select PDF File", command=upload_pdf, bg="#4CAF50", fg="white", width=20)
 upload_button.pack(pady=10)
 
 # Label to show selected file
-file_label = tk.Label(window, text="No file selected.")
+file_label = tk.Label(window, text="No file selected.", font=label_font, bg="#f0f4f5")
 file_label.pack(pady=5)
 
 # Field to enter the generated file name
-name_label = tk.Label(window, text="Name for generated .apkg file:")
+name_label = tk.Label(window, text="Enter name for .apkg file:", font=label_font, bg="#f0f4f5")
 name_label.pack(pady=5)
 
-name_entry = tk.Entry(window)
+name_entry = tk.Entry(window, width=40)
 name_entry.pack(pady=5)
 
 # Button to save file
-save_button = tk.Button(window, text="Save file", command=save_file)
+save_button = tk.Button(
+  window, text="Generate and Save Anki Deck", command=save_file, bg="#2196F3", fg="white", width=25
+)
 save_button.pack(pady=10)
 
 # Run the application
 window.mainloop()
-
-# print("Anki deck created and saved as 'output_deck.apkg'")
