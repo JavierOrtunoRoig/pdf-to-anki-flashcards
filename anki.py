@@ -10,7 +10,7 @@ anki_model = genanki.Model(
       "name": "Card 1",
       "qfmt": """
           <div class="note">
-              <div class="front">
+              <div class="front full-redounded">
                   <div class="question row center">
                       {{cloze:Questions}}
                   </div>
